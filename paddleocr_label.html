@@ -1,0 +1,4123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OCR Label Desktop</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f2f4f7;
+    color:#222;
+    height:100vh;
+    overflow:hidden
+}
+
+.top{
+    height:56px;
+    background:#fff;
+    border-bottom:1px solid #d8dde3;
+    display:flex;
+    align-items:center;
+    padding:0 14px;
+    gap:8px
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:20px;
+    font-weight:700;
+    color:#1677ff;
+    margin-right:15px
+}
+
+.logo img{
+    width:58px;
+    height:42px;
+    object-fit:contain
+}
+
+.logo span{color:#222}
+
+button,.select{
+    border:1px solid #ccd2d9;
+    background:#fff;
+    border-radius:5px;
+    padding:8px 12px;
+    cursor:pointer
+}
+
+button:hover{
+    background:#eef5ff
+}
+
+.primary{
+    background:#1677ff;
+    color:white;
+    border-color:#1677ff
+}
+
+.danger{
+    color:#c62828
+}
+
+.main{
+    height:calc(100vh - 56px);
+    display:grid;
+    grid-template-columns:250px 1fr 330px;
+    gap:6px;
+    padding:6px
+}
+
+.panel,.center{
+    background:#fff;
+    border:1px solid #d8dde3;
+    border-radius:5px;
+    overflow:hidden
+}
+
+.panel-title{
+    font-weight:700;
+    padding:11px;
+    border-bottom:1px solid #e1e5e9
+}
+
+#images{
+    height:calc(100% - 75px);
+    overflow:auto;
+    padding:6px
+}
+
+.thumb{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:7px;
+    border-radius:5px;
+    cursor:pointer;
+    margin-bottom:3px
+}
+
+.thumb:hover{background:#f1f5f9}
+.thumb.active{background:#dceaff}
+.thumb.verified{background:#e8f7ee}
+.thumb.verified.active{background:#c9f0d8}
+
+.thumb img{
+    width:58px;
+    height:45px;
+    object-fit:contain;
+    background:#eee;
+    border:1px solid #ddd
+}
+
+.thumb small{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap
+}
+
+.tick{
+    width:20px;
+    color:#1b8f3a;
+    font-weight:700;
+    text-align:center
+}
+
+.center{
+    position:relative;
+    display:flex;
+    flex-direction:column
+}
+
+.toolbar{
+    height:48px;
+    border-bottom:1px solid #ddd;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:5px
+}
+
+.canvasWrap{
+    flex:1;
+    position:relative;
+    overflow:hidden;
+    background:#e8ecf0;
+    display:flex;
+    align-items:center;
+    justify-content:center
+}
+
+#canvas{
+    background:white;
+    box-shadow:0 2px 10px #aaa;
+    cursor:crosshair;
+    display:block
+}
+
+.bottom{
+    height:45px;
+    border-top:1px solid #ddd;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px
+}
+
+.list{
+    height:48%;
+    overflow:auto
+}
+
+.row{
+    padding:8px 10px;
+    border-bottom:1px solid #eee;
+    display:flex;
+    gap:7px;
+    align-items:center;
+    cursor:pointer
+}
+
+.row.active{
+    background:#dceaff
+}
+
+.row .txt{
+    flex:1;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis
+}
+
+.edit{
+    height:52%;
+    padding:10px;
+    border-top:1px solid #ddd
+}
+
+textarea{
+    width:100%;
+    height:110px;
+    resize:vertical;
+    border:1px solid #ccd2d9;
+    border-radius:5px;
+    padding:8px;
+    font-family:Arial
+}
+
+#text{
+    text-transform:uppercase
+}
+
+.info{
+    font-size:12px;
+    color:#666;
+    padding:8px;
+    border-top:1px solid #ddd
+}
+
+input[type=file]{
+    display:none
+}
+
+.badge{
+    font-size:12px;
+    color:#666
+}
+
+#autosaveStatus{
+    min-width:125px;
+    text-align:right
+}
+</style>
+</head>
+
+<body>
+
+<div class="top">
+
+    <div class="logo">
+        <img src="logo.jpg" alt="OCR logo">
+        OCR <span>L.Desktop</span>  
+    </div>
+
+    <label>
+        <button onclick="document.getElementById('folder').click()">
+            📁 Open Folder
+        </button>
+    </label>
+
+    <input id="folder" type="file" webkitdirectory multiple>
+
+    <button onclick="document.getElementById('labelFile').click()">
+        Upload Label.txt
+    </button>
+
+    <input id="labelFile" type="file" accept=".txt,text/plain">
+
+    <button title="Download a backup of annotations and verification states" onclick="downloadBackup()">
+        Backup
+    </button>
+    <button title="Restore annotations and verification states from a backup file" onclick="document.getElementById('backupFile').click()">
+        Restore Backup
+    </button>
+    <input id="backupFile" type="file" accept=".json,application/json">
+
+    <button onclick="addBox()">＋ Text Box</button>
+    <button onclick="deleteBox()">🗑 Delete</button>
+    <button onclick="clearBoxes()">Clear All</button>
+    <button title="Restore current image annotations from the uploaded label.txt" onclick="restoreOriginal()">↶ Restore</button>
+
+    <button onclick="zoomIn()">🔍 +</button>
+    <button onclick="zoomOut()">🔎 −</button>
+    <button onclick="fit()">⛶ Fit</button>
+
+    <button class="primary" onclick="downloadLabelTxt()">
+        Export Label.txt
+    </button>
+
+    <button onclick="downloadVerifiedZip()">
+        Download Verified
+    </button>
+
+    <button onclick="downloadAllZip()">
+        Download All Image+Label
+    </button>
+
+    <span class="badge" id="autosaveStatus">Auto-save ready</span>
+
+</div>
+
+
+<div class="main">
+
+    <div class="panel">
+
+        <div class="panel-title">
+            Image List
+            <span id="count">(0)</span>
+            <span class="badge" id="verifiedCount"></span>
+        </div>
+
+        <div id="images"></div>
+
+        <div class="info">
+            A/D = Prev/Next &nbsp;
+            S = Box &nbsp;
+            Space = Verified &nbsp;
+            C/X = Move Box Left/Right &nbsp;
+            R = Restore Original &nbsp;
+            Drag 4 corner points = Geometric OCR Shape
+        </div>
+
+    </div>
+
+
+    <div class="center">
+
+        <div class="toolbar">
+
+            <button onclick="prev()">← Prev</button>
+            <button onclick="next()">Next →</button>
+
+            <span id="page">0 / 0</span>
+
+            <span style="flex:1"></span>
+
+            <span id="zoomText">100%</span>
+
+        </div>
+
+
+        <div class="canvasWrap" id="wrap">
+
+            <canvas id="canvas"></canvas>
+
+        </div>
+
+
+        <div class="bottom">
+
+            <button onclick="prev()">◀</button>
+
+            <span id="bottomPage">0 / 0</span>
+
+            <button onclick="next()">▶</button>
+
+        </div>
+
+    </div>
+
+
+    <div class="panel">
+
+        <div class="panel-title">
+            Text Labels
+            <span id="boxCount">(0)</span>
+        </div>
+
+        <div class="list" id="labels"></div>
+
+        <div class="edit">
+
+            <b>Text Content</b>
+
+            <textarea
+                id="text"
+                placeholder="Select a box and type OCR text..."
+            ></textarea>
+
+            <br><br>
+
+            <button class="primary" onclick="applyText()">
+                Apply Text
+            </button>
+
+            <button onclick="addBox()">
+                Add Text Box
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* ============================================================
+   GLOBAL VARIABLES
+   ============================================================ */
+
+let files = [];
+let current = 0;
+
+let data = new Map();
+// Immutable per-image snapshot loaded from the original label.txt.
+// Restore always uses the current image key, so boxes can never cross images.
+let originalData = new Map();
+let verified = new Set();
+
+let selected = -1;
+
+let img = new Image();
+
+let scale = 1;
+let fitMode = true;
+
+let drawing = false;
+let start = null;
+
+let editAction = null;
+let editStart = null;
+let editBox = null;
+let editHandle = '';
+
+let listRenderToken = 0;
+let thumbObserver = null;
+let mainImageUrl = null;
+let autosaveTimer = null;
+let autosaveStorageKey = null;
+let autosaveSignature = null;
+
+const AUTOSAVE_PREFIX = 'ocr-label-autosave-v1-';
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const wrap = document.getElementById('wrap');
+
+
+/* ============================================================
+   FILE / IMAGE KEY
+   ============================================================ */
+
+function fileKey(f,i){
+
+    return f?.webkitRelativePath ||
+           f?.name ||
+           ('image_'+i);
+
+}
+
+
+function key(){
+
+    return fileKey(files[current],current);
+
+}
+
+
+function boxes(){
+
+    const k = key();
+
+    if(!data.has(k)){
+        data.set(k,[]);
+    }
+
+    return data.get(k);
+
+}
+
+
+function setBoxes(v){
+
+    data.set(key(),v);
+    scheduleAutosave();
+
+}
+
+
+function autosaveStatus(message){
+
+    document.getElementById('autosaveStatus').textContent = message;
+
+}
+
+
+function autosaveKey(signature){
+
+    let hash = 2166136261;
+
+    for(let i=0;i<signature.length;i++){
+        hash ^= signature.charCodeAt(i);
+        hash = Math.imul(hash,16777619);
+    }
+
+    return AUTOSAVE_PREFIX + (hash >>> 0).toString(16);
+
+}
+
+
+function initializeAutosaveWorkspace(){
+
+    if(autosaveTimer){
+        clearTimeout(autosaveTimer);
+        autosaveTimer = null;
+    }
+
+    autosaveSignature = JSON.stringify(
+        files.map((f,i) => [
+            fileKey(f,i),
+            f.size,
+            f.lastModified
+        ])
+    );
+    autosaveStorageKey = autosaveKey(autosaveSignature);
+
+    try{
+        const saved = localStorage.getItem(autosaveStorageKey);
+
+        if(saved){
+            const snapshot = JSON.parse(saved);
+
+            if(
+                snapshot.format === 'ocr-label-autosave' &&
+                snapshot.version === 1 &&
+                snapshot.signature === autosaveSignature &&
+                Array.isArray(snapshot.annotations) &&
+                Array.isArray(snapshot.verified)
+            ){
+                const availableKeys = new Set(files.map((f,i) => fileKey(f,i)));
+                const restoredData = new Map();
+
+                snapshot.annotations.forEach(([k, rawBoxes]) => {
+                    if(!availableKeys.has(k) || !Array.isArray(rawBoxes)){
+                        return;
+                    }
+
+                    const anns = rawBoxes.map(box => {
+                        const parsed = normalizeOCRPoints(box?.points || []);
+                        if(!parsed){
+                            return null;
+                        }
+                        return {
+                            points: parsed.points,
+                            coordinateMode: ['normalized','pixel'].includes(box.coordinateMode)
+                                ? box.coordinateMode
+                                : parsed.coordinateMode,
+                            text: String(box.text ?? '')
+                        };
+                    }).filter(Boolean);
+
+                    restoredData.set(k,anns);
+                });
+
+                data = restoredData;
+                verified = new Set(
+                    snapshot.verified.filter(k => typeof k === 'string' && availableKeys.has(k))
+                );
+                autosaveStatus('Auto-save restored');
+                return;
+            }
+        }
+
+        autosaveStatus('Auto-save enabled');
+    }
+    catch(err){
+        autosaveStatus('Auto-save unavailable');
+        console.warn('Could not restore auto-saved annotations:',err);
+    }
+
+}
+
+
+function scheduleAutosave(){
+
+    if(!autosaveStorageKey || !autosaveSignature){
+        return;
+    }
+
+    autosaveStatus('Saving changes...');
+
+    if(autosaveTimer){
+        clearTimeout(autosaveTimer);
+    }
+
+    autosaveTimer = setTimeout(flushAutosave,500);
+
+}
+
+
+function flushAutosave(){
+
+    if(autosaveTimer){
+        clearTimeout(autosaveTimer);
+        autosaveTimer = null;
+    }
+
+    if(!autosaveStorageKey || !autosaveSignature){
+        return;
+    }
+
+    try{
+        const snapshot = {
+            format: 'ocr-label-autosave',
+            version: 1,
+            signature: autosaveSignature,
+            annotations: [...data].map(([k, imageBoxes]) => [
+                k,
+                imageBoxes.map(cloneOriginalBox)
+            ]),
+            verified: [...verified]
+        };
+
+        localStorage.setItem(autosaveStorageKey,JSON.stringify(snapshot));
+        autosaveStatus('Auto-saved');
+    }
+    catch(err){
+        autosaveStatus('Auto-save failed');
+        console.warn('Could not auto-save annotations:',err);
+    }
+
+}
+
+
+/* ============================================================
+   OPEN IMAGE FOLDER
+   ============================================================ */
+
+document.getElementById('folder').onchange = async e => {
+
+    flushAutosave();
+
+    const selectedFiles = [...e.target.files];
+
+    const labelFile =
+        selectedFiles.find(
+            f => f.name.toLowerCase() === 'label.txt'
+        );
+
+    files =
+        selectedFiles
+        .filter(isImageFile)
+        .sort(
+            (a,b) =>
+                fileKey(a,0).localeCompare(fileKey(b,0))
+        );
+
+    current = 0;
+
+    data = new Map();
+    originalData = new Map();
+    verified = new Set();
+    selected = -1;
+
+    if(labelFile){
+        await loadLabelTxt(labelFile);
+    }
+
+    initializeAutosaveWorkspace();
+
+    renderList();
+
+    load();
+
+    updateVerifiedCount();
+
+};
+
+
+/* ============================================================
+   UPLOAD LABEL.TXT
+   ============================================================ */
+
+document.getElementById('labelFile').onchange = async e => {
+
+    const labelFile = e.target.files[0];
+
+    if(!labelFile){
+        return;
+    }
+
+    if(!files.length){
+
+        alert(
+            'Open image folder first, then upload label.txt.'
+        );
+
+        e.target.value = '';
+
+        return;
+    }
+
+    data = new Map();
+    originalData = new Map();
+
+    await loadLabelTxt(labelFile);
+
+    scheduleAutosave();
+
+    selected = -1;
+
+    updateLabels();
+    draw();
+
+    e.target.value = '';
+
+};
+
+
+/* ============================================================
+   BACKUP / RESTORE WORKSPACE
+   ============================================================ */
+
+document.getElementById('backupFile').onchange = async e => {
+
+    const backupFile = e.target.files[0];
+
+    if(!backupFile){
+        return;
+    }
+
+    try{
+        const backup = JSON.parse(await backupFile.text());
+        restoreBackup(backup);
+    }
+    catch(err){
+        alert('Could not read this backup file. Please choose a valid OCR Label backup.');
+        console.warn('Could not restore backup:', err);
+    }
+    finally{
+        e.target.value = '';
+    }
+
+};
+
+
+function downloadBackup(){
+
+    if(!files.length){
+        alert('Open an image folder before creating a backup.');
+        return;
+    }
+
+    const annotations = Object.create(null);
+    files.forEach((f,i) => {
+        const k = fileKey(f,i);
+        annotations[k] = (data.get(k) || []).map(box => {
+            const parsed = ensurePoints(box);
+            return {
+                points: parsed.points.map(p => [Number(p[0]), Number(p[1])]),
+                coordinateMode: parsed.coordinateMode,
+                text: box.text || ''
+            };
+        });
+    });
+
+    const backup = {
+        format: 'ocr-label-backup',
+        version: 1,
+        createdAt: new Date().toISOString(),
+        annotations,
+        verified: [...verified]
+    };
+
+    downloadBlob(
+        new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'}),
+        'ocr-label-backup.json'
+    );
+}
+
+
+function restoreBackup(backup){
+
+    if(!files.length){
+        alert('Open the image folder for this backup first.');
+        return;
+    }
+
+    if(
+        !backup ||
+        backup.format !== 'ocr-label-backup' ||
+        backup.version !== 1 ||
+        !backup.annotations ||
+        typeof backup.annotations !== 'object' ||
+        Array.isArray(backup.annotations) ||
+        !Array.isArray(backup.verified)
+    ){
+        alert('This is not a supported OCR Label backup file.');
+        return;
+    }
+
+    if(!confirm('Restore this backup? Current annotations and verification states will be replaced.')){
+        return;
+    }
+
+    const availableKeys = new Set(files.map((f,i) => fileKey(f,i)));
+    const restoredData = new Map();
+    let matched = 0;
+
+    Object.entries(backup.annotations).forEach(([k, rawBoxes]) => {
+        if(!availableKeys.has(k) || !Array.isArray(rawBoxes)){
+            return;
+        }
+
+        const anns = rawBoxes.map(box => {
+            const parsed = normalizeOCRPoints(box?.points || []);
+            if(!parsed){
+                return null;
+            }
+            return {
+                points: parsed.points,
+                coordinateMode: ['normalized','pixel'].includes(box.coordinateMode) ? box.coordinateMode : parsed.coordinateMode,
+                text: String(box.text ?? box.transcription ?? '')
+            };
+        }).filter(Boolean);
+
+        restoredData.set(k, anns);
+        matched++;
+    });
+
+    if(!matched){
+        alert('No images in this folder match the backup. Open the matching image folder and try again.');
+        return;
+    }
+
+    data = restoredData;
+    verified = new Set(backup.verified.filter(k => typeof k === 'string' && availableKeys.has(k)));
+    selected = -1;
+
+    scheduleAutosave();
+
+    renderList();
+    load();
+    updateVerifiedCount();
+    alert(`Backup restored for ${matched} image${matched === 1 ? '' : 's'}.`);
+}
+
+
+/* ============================================================
+   IMAGE FILE CHECK
+   ============================================================ */
+
+function isImageFile(f){
+
+    return (
+        f.type.startsWith('image/') ||
+        /\.(jpg|jpeg|png|bmp|gif|webp|tif|tiff)$/i.test(f.name)
+    );
+
+}
+
+
+/* ============================================================
+   MATCH LABEL IMAGE TO REAL IMAGE
+   ============================================================ */
+
+function matchImageKey(path){
+
+    const clean =
+        path
+        .replace(/\\/g,'/')
+        .replace(/^\.?\//,'');
+
+    const byKey = new Map();
+    const byShort = new Map();
+    const byName = new Map();
+
+    files.forEach((f,i)=>{
+
+        const k =
+            fileKey(f,i)
+            .replace(/\\/g,'/');
+
+        byKey.set(k,k);
+
+        byName.set(f.name,k);
+
+        const parts = k.split('/');
+
+        byShort.set(
+            parts.slice(1).join('/'),
+            k
+        );
+
+    });
+
+
+    if(byKey.has(clean)){
+        return byKey.get(clean);
+    }
+
+
+    if(byShort.has(clean)){
+        return byShort.get(clean);
+    }
+
+
+    if(byName.has(clean)){
+        return byName.get(clean);
+    }
+
+
+    for(const [k] of byKey){
+
+        if(
+            k.endsWith('/'+clean) ||
+            clean.endsWith('/'+k)
+        ){
+            return k;
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* ============================================================
+   LOAD LABEL.TXT
+   ============================================================ */
+
+/* ============================================================
+   NORMALIZE OCR QUADRILATERAL
+   - Keeps coordinates in ORIGINAL IMAGE PIXELS.
+   - Supports normalized 0..1 coordinates.
+   - Orders 4 points clockwise starting from top-left.
+   ============================================================ */
+
+function normalizeOCRPoints(rawPoints){
+
+    if(!Array.isArray(rawPoints) || rawPoints.length < 4){
+        return null;
+    }
+
+    const pts = rawPoints.slice(0,4)
+        .map(p => [Number(p?.[0]), Number(p?.[1])])
+        .filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+
+    if(pts.length !== 4){
+        return null;
+    }
+
+    const normalized = pts.every(p =>
+        p[0] >= 0 && p[0] <= 1 && p[1] >= 0 && p[1] <= 1
+    );
+
+    return {
+        points: pts,
+        coordinateMode: normalized ? 'normalized' : 'pixel'
+    };
+}
+
+
+async function loadLabelTxt(file){
+
+    const text = await file.text();
+
+    text.split(/\r?\n/).forEach(line => {
+
+        if(!line.trim()){
+            return;
+        }
+
+        const tab = line.indexOf('\t');
+
+        if(tab < 0){
+            return;
+        }
+
+        const imagePath =
+            line.slice(0,tab).trim();
+
+        const json =
+            line.slice(tab+1).trim();
+
+        const k =
+            matchImageKey(imagePath);
+
+        if(!k){
+            console.warn(
+                'Image not found for label:',
+                imagePath
+            );
+            return;
+        }
+
+        try{
+
+            const raw = JSON.parse(json);
+
+            const anns = raw
+                .map(ann => {
+
+                    const parsed =
+                        normalizeOCRPoints(
+                            ann.points || []
+                        );
+
+                    if(!parsed){
+                        return null;
+                    }
+
+                    return {
+                        points: parsed.points,
+                        coordinateMode: parsed.coordinateMode,
+                        text:
+                            ann.transcription ??
+                            ann.text ??
+                            ''
+                    };
+
+                })
+                .filter(Boolean);
+
+            data.set(k, anns);
+            // Keep the label.txt state as the restore point.
+            originalData.set(
+                k,
+                anns.map(cloneOriginalBox)
+            );
+
+        }
+        catch(err){
+
+            console.warn(
+                'Could not parse label line:',
+                imagePath,
+                err
+            );
+
+        }
+
+    });
+
+}
+
+
+/* ============================================================
+   IMAGE LIST
+   ============================================================ */
+
+function renderList(){
+
+    const el =
+        document.getElementById('images');
+
+    const token = ++listRenderToken;
+
+    const batchSize = 80;
+
+    let i = 0;
+
+    el.innerHTML = '';
+
+
+    if(thumbObserver){
+        thumbObserver.disconnect();
+    }
+
+
+    thumbObserver =
+        new IntersectionObserver(entries => {
+
+            entries.forEach(entry => {
+
+                if(!entry.isIntersecting){
+                    return;
+                }
+
+                const im = entry.target;
+
+                const f =
+                    files[
+                        Number(im.dataset.index)
+                    ];
+
+                if(f && !im.src){
+
+                    im.src =
+                        URL.createObjectURL(f);
+
+                    im.onload = () => {
+
+                        URL.revokeObjectURL(
+                            im.src
+                        );
+
+                    };
+
+                }
+
+                thumbObserver.unobserve(im);
+
+            });
+
+        },
+        {
+            root:el,
+            rootMargin:'160px'
+        });
+
+
+    function appendBatch(){
+
+        if(token !== listRenderToken){
+            return;
+        }
+
+        const frag =
+            document.createDocumentFragment();
+
+        const end =
+            Math.min(
+                i + batchSize,
+                files.length
+            );
+
+
+        for(; i < end; i++){
+
+            const f = files[i];
+
+            const index = i;
+
+            const k =
+                fileKey(f,index);
+
+            const d =
+                document.createElement('div');
+
+            d.className =
+                'thumb' +
+                (i === current ? ' active':'') +
+                (verified.has(k) ? ' verified':'');
+
+            d.dataset.index = index;
+
+
+            const im =
+                document.createElement('img');
+
+            im.dataset.index = index;
+
+            im.loading = 'lazy';
+
+
+            const s =
+                document.createElement('small');
+
+            s.textContent =
+                f.webkitRelativePath ||
+                f.name;
+
+
+            const tick =
+                document.createElement('span');
+
+            tick.className = 'tick';
+
+            tick.textContent =
+                verified.has(k) ? '✓' : '';
+
+
+            d.append(im,s,tick);
+
+
+            d.onclick = () => {
+
+                current = index;
+
+                selected = -1;
+
+                load();
+
+                updateActiveThumb();
+
+            };
+
+
+            frag.appendChild(d);
+
+            thumbObserver.observe(im);
+
+        }
+
+
+        el.appendChild(frag);
+
+
+        if(i < files.length){
+
+            requestAnimationFrame(
+                appendBatch
+            );
+
+        }
+
+    }
+
+
+    appendBatch();
+
+
+    document.getElementById('count')
+        .textContent =
+        '(' + files.length + ')';
+
+
+    updateVerifiedCount();
+
+}
+
+
+/* ============================================================
+   ACTIVE THUMBNAIL
+   ============================================================ */
+
+function updateActiveThumb(){
+
+    document
+    .querySelectorAll('.thumb')
+    .forEach(d => {
+
+        const idx =
+            Number(d.dataset.index);
+
+        const k =
+            fileKey(files[idx],idx);
+
+        d.classList.toggle(
+            'active',
+            idx === current
+        );
+
+        d.classList.toggle(
+            'verified',
+            verified.has(k)
+        );
+
+
+        const tick =
+            d.querySelector('.tick');
+
+        if(tick){
+
+            tick.textContent =
+                verified.has(k) ? '✓' : '';
+
+        }
+
+    });
+
+
+    const active =
+        document.querySelector(
+            `.thumb[data-index="${current}"]`
+        );
+
+
+    if(active){
+
+        active.scrollIntoView({
+            block:'nearest'
+        });
+
+    }
+
+
+    updateVerifiedCount();
+
+}
+
+
+/* ============================================================
+   VERIFIED
+   ============================================================ */
+
+function updateVerifiedCount(){
+
+    document.getElementById(
+        'verifiedCount'
+    ).textContent =
+        'verified ' + verified.size;
+
+}
+
+
+function toggleVerified(){
+
+    if(!files.length){
+        return;
+    }
+
+    const k = key();
+
+    if(verified.has(k)){
+        verified.delete(k);
+    }
+    else{
+        verified.add(k);
+    }
+
+    scheduleAutosave();
+
+    updateActiveThumb();
+
+    draw();
+
+}
+
+
+/* ============================================================
+   LOAD IMAGE
+   ============================================================ */
+
+function load(){
+
+    if(!files.length){
+
+        draw();
+
+        return;
+    }
+
+
+    img.onload = () => {
+
+        /*
+         * Use the REAL source image dimensions.
+         */
+
+        fitMode = true;
+
+        boxes().forEach(materializeNormalizedBox);
+
+        fit();
+
+    };
+
+
+    if(mainImageUrl){
+
+        URL.revokeObjectURL(
+            mainImageUrl
+        );
+
+    }
+
+
+    mainImageUrl =
+        URL.createObjectURL(
+            files[current]
+        );
+
+
+    img.src = mainImageUrl;
+
+
+    document.getElementById('page')
+        .textContent =
+        `${current+1} / ${files.length}`;
+
+
+    document.getElementById('bottomPage')
+        .textContent =
+        `${current+1} / ${files.length}`;
+
+
+    selected = -1;
+
+    updateLabels();
+
+    updateActiveThumb();
+
+}
+
+
+/* ============================================================
+   FIT IMAGE
+   ============================================================ */
+
+function fit(){
+
+    if(!img.naturalWidth || !img.naturalHeight){
+        return;
+    }
+
+
+    const w =
+        wrap.clientWidth - 35;
+
+    const h =
+        wrap.clientHeight - 35;
+
+
+    scale =
+        Math.min(
+            w / img.naturalWidth,
+            h / img.naturalHeight
+        );
+
+
+    /*
+     * Prevent zero/negative scale.
+     */
+
+    scale =
+        Math.max(
+            0.01,
+            scale
+        );
+
+
+    fitMode = true;
+
+    resizeCanvas();
+
+    draw();
+
+}
+
+
+/* ============================================================
+   RESIZE CANVAS
+   ============================================================ */
+
+function resizeCanvas(){
+
+    if(!img.naturalWidth || !img.naturalHeight){
+        return;
+    }
+
+
+    /*
+     * Canvas backing resolution is based on
+     * ORIGINAL image resolution × zoom.
+     */
+
+    canvas.width =
+        Math.max(
+            1,
+            Math.round(
+                img.naturalWidth * scale
+            )
+        );
+
+
+    canvas.height =
+        Math.max(
+            1,
+            Math.round(
+                img.naturalHeight * scale
+            )
+        );
+
+
+    /*
+     * IMPORTANT:
+     *
+     * No CSS width/height is forced here.
+     * Browser displays the actual canvas.
+     *
+     * Mouse coordinates are calculated from
+     * canvas.getBoundingClientRect().
+     */
+
+}
+
+
+/* ============================================================
+   ZOOM
+   ============================================================ */
+
+function zoomIn(){
+
+    if(!img.naturalWidth){
+        return;
+    }
+
+    fitMode = false;
+
+    scale *= 1.2;
+
+    scale =
+        Math.min(
+            scale,
+            20
+        );
+
+    resizeCanvas();
+
+    draw();
+
+}
+
+
+function zoomOut(){
+
+    if(!img.naturalWidth){
+        return;
+    }
+
+    fitMode = false;
+
+    scale /= 1.2;
+
+    scale =
+        Math.max(
+            scale,
+            0.05
+        );
+
+    resizeCanvas();
+
+    draw();
+
+}
+
+
+function zoomAt(delta){
+
+    if(!img.naturalWidth){
+        return;
+    }
+
+    fitMode = false;
+
+    if(delta < 0){
+        scale *= 1.12;
+    }
+    else{
+        scale /= 1.12;
+    }
+
+
+    scale =
+        Math.max(
+            0.05,
+            Math.min(
+                scale,
+                20
+            )
+        );
+
+
+    resizeCanvas();
+
+    draw();
+
+}
+
+
+/* ============================================================
+   IMPORTANT COORDINATE CONVERSION
+   ============================================================ */
+
+/*
+ * Convert mouse position from SCREEN/CSS coordinates
+ * to ORIGINAL IMAGE PIXEL coordinates.
+ *
+ * This is the important fix.
+ *
+ * We DO NOT assume:
+ *
+ *     displayed_size == canvas.width
+ *
+ * We calculate the real ratio every time.
+ */
+
+function pToImage(e){
+
+    const r =
+        canvas.getBoundingClientRect();
+
+
+    if(
+        r.width <= 0 ||
+        r.height <= 0 ||
+        !img.naturalWidth ||
+        !img.naturalHeight
+    ){
+
+        return {
+            x:0,
+            y:0
+        };
+
+    }
+
+
+    /*
+     * Mouse coordinate inside displayed canvas.
+     */
+
+    const displayX =
+        e.clientX - r.left;
+
+    const displayY =
+        e.clientY - r.top;
+
+
+    /*
+     * Convert display coordinate to
+     * canvas backing coordinate.
+     */
+
+    const canvasX =
+        displayX *
+        (canvas.width / r.width);
+
+    const canvasY =
+        displayY *
+        (canvas.height / r.height);
+
+
+    /*
+     * Convert canvas backing coordinate
+     * to ORIGINAL image coordinate.
+     */
+
+    const x =
+        canvasX *
+        (img.naturalWidth / canvas.width);
+
+    const y =
+        canvasY *
+        (img.naturalHeight / canvas.height);
+
+
+    return {
+
+        x:clamp(
+            x,
+            0,
+            img.naturalWidth
+        ),
+
+        y:clamp(
+            y,
+            0,
+            img.naturalHeight
+        )
+
+    };
+
+}
+
+
+/* ============================================================
+   BASIC POINT FUNCTIONS
+   ============================================================ */
+
+function clamp(n,min,max){
+
+    return Math.max(
+        min,
+        Math.min(max,n)
+    );
+
+}
+
+
+function pointArray(p){
+
+    if(Array.isArray(p)){
+
+        return [
+            Number(p[0]),
+            Number(p[1])
+        ];
+
+    }
+
+    return [
+        Number(p.x),
+        Number(p.y)
+    ];
+
+}
+
+
+function clampPoint(p){
+
+    const maxW =
+        img.naturalWidth || 1;
+
+    const maxH =
+        img.naturalHeight || 1;
+
+
+    p[0] =
+        clamp(
+            p[0],
+            0,
+            maxW
+        );
+
+
+    p[1] =
+        clamp(
+            p[1],
+            0,
+            maxH
+        );
+
+
+    return p;
+
+}
+
+
+/* ============================================================
+   CREATE RECTANGLE
+   ============================================================ */
+
+function rectPoints(a,b){
+
+    const x1 =
+        Math.min(
+            a.x,
+            b.x
+        );
+
+    const y1 =
+        Math.min(
+            a.y,
+            b.y
+        );
+
+    const x2 =
+        Math.max(
+            a.x,
+            b.x
+        );
+
+    const y2 =
+        Math.max(
+            a.y,
+            b.y
+        );
+
+
+    return [
+
+        [x1,y1],
+        [x2,y1],
+        [x2,y2],
+        [x1,y2]
+
+    ].map(clampPoint);
+
+}
+
+
+function norm(a,b){
+
+    return {
+
+        points:
+            rectPoints(a,b),
+
+        text:''
+
+    };
+
+}
+
+
+/* ============================================================
+   ENSURE 4 POINTS
+   ============================================================ */
+
+function ensurePoints(b){
+
+    if(!b.points){
+
+        b.points = [
+            [b.x,b.y],
+            [b.x+b.w,b.y],
+            [b.x+b.w,b.y+b.h],
+            [b.x,b.y+b.h]
+        ];
+
+        delete b.x;
+        delete b.y;
+        delete b.w;
+        delete b.h;
+    }
+
+    /* NEVER clamp imported OCR points here. */
+    b.points = b.points
+        .slice(0,4)
+        .map(pointArray);
+
+    return b;
+}
+
+
+function materializeNormalizedBox(b){
+
+    if(!b || b.coordinateMode !== 'normalized' ||
+       !img.naturalWidth || !img.naturalHeight){
+        return b;
+    }
+
+    b.points = b.points.map(p => [
+        p[0] * img.naturalWidth,
+        p[1] * img.naturalHeight
+    ]).map(clampPoint);
+
+    delete b.coordinateMode;
+    return b;
+}
+
+
+/* ============================================================
+   CLONE BOX
+   ============================================================ */
+
+function cloneOriginalBox(b){
+
+    return {
+        text: b.text || '',
+        points: Array.isArray(b.points)
+            ? b.points.slice(0,4).map(p => [Number(p[0]), Number(p[1])])
+            : [],
+        ...(b.coordinateMode ? {coordinateMode:b.coordinateMode} : {})
+    };
+}
+
+function cloneBox(b){
+
+    ensurePoints(b);
+
+    return {
+
+        text:
+            b.text || '',
+
+        points:
+            b.points.map(
+                p => [
+                    p[0],
+                    p[1]
+                ]
+            )
+
+    };
+
+}
+
+
+/* ============================================================
+   BOX BOUNDING RECTANGLE
+   ============================================================ */
+
+function boxBounds(b){
+
+    const pts =
+        ensurePoints(b).points;
+
+    const xs =
+        pts.map(
+            p => p[0]
+        );
+
+    const ys =
+        pts.map(
+            p => p[1]
+        );
+
+
+    return {
+
+        x:Math.min(...xs),
+
+        y:Math.min(...ys),
+
+        r:Math.max(...xs),
+
+        b:Math.max(...ys),
+
+        w:
+            Math.max(...xs) -
+            Math.min(...xs),
+
+        h:
+            Math.max(...ys) -
+            Math.min(...ys)
+
+    };
+
+}
+
+
+/* ============================================================
+   GEOMETRIC 4-POINT HANDLES
+   ------------------------------------------------------------
+   Exactly FOUR corner handles:
+       p0 = top-left
+       p1 = top-right
+       p2 = bottom-right
+       p3 = bottom-left
+
+   No midpoint N/E/S/W handles.
+   Each handle moves a real OCR polygon point.
+   ============================================================ */
+
+function boxHandles(b){
+
+    const pts =
+        ensurePoints(b).points;
+
+    return [
+        ['p0', pts[0][0], pts[0][1]],
+        ['p1', pts[1][0], pts[1][1]],
+        ['p2', pts[2][0], pts[2][1]],
+        ['p3', pts[3][0], pts[3][1]]
+    ];
+
+}
+
+
+function cross(a,b,c){
+
+    return (
+        (b[0]-a[0]) * (c[1]-a[1]) -
+        (b[1]-a[1]) * (c[0]-a[0])
+    );
+
+}
+
+
+function polygonArea(pts){
+
+    let area = 0;
+
+    for(let i=0; i<pts.length; i++){
+
+        const j = (i+1) % pts.length;
+
+        area +=
+            pts[i][0] * pts[j][1] -
+            pts[j][0] * pts[i][1];
+
+    }
+
+    return Math.abs(area) / 2;
+
+}
+
+
+/*
+ * A valid OCR quadrilateral must remain:
+ * - 4 points
+ * - non-collapsed
+ * - non-self-intersecting
+ * - consistently wound
+ */
+function validQuad(pts){
+
+    if(!pts || pts.length !== 4){
+        return false;
+    }
+
+    for(let i=0; i<4; i++){
+
+        const a = pts[i];
+        const b = pts[(i+1)%4];
+
+        if(
+            Math.hypot(
+                b[0]-a[0],
+                b[1]-a[1]
+            ) < 2
+        ){
+            return false;
+        }
+
+    }
+
+    const signs = [];
+
+    for(let i=0; i<4; i++){
+
+        const z =
+            cross(
+                pts[i],
+                pts[(i+1)%4],
+                pts[(i+2)%4]
+            );
+
+        if(Math.abs(z) > 0.01){
+            signs.push(Math.sign(z));
+        }
+
+    }
+
+    if(
+        signs.length &&
+        signs.some(s => s !== signs[0])
+    ){
+        return false;
+    }
+
+    return polygonArea(pts) >= 4;
+
+}
+
+
+function geometricMovePoint(
+    original,
+    index,
+    target
+){
+
+    const candidate =
+        original.map(p => [
+            p[0],
+            p[1]
+        ]);
+
+    candidate[index] =
+        clampPoint([
+            target[0],
+            target[1]
+        ]);
+
+    if(validQuad(candidate)){
+        return candidate;
+    }
+
+    return original.map(p => [
+        p[0],
+        p[1]
+    ]);
+
+}
+
+
+/* ============================================================
+   POINT IN POLYGON
+   ============================================================ */
+
+function pointInPoly(p,pts){
+
+    let inside = false;
+
+    for(
+        let i=0,
+        j=pts.length-1;
+
+        i<pts.length;
+
+        j=i++
+    ){
+
+        const xi = pts[i][0];
+        const yi = pts[i][1];
+        const xj = pts[j][0];
+        const yj = pts[j][1];
+
+        const intersect =
+            (
+                (yi > p.y) !==
+                (yj > p.y)
+            )
+            &&
+            (
+                p.x <
+                (xj-xi) *
+                (p.y-yi) /
+                (yj-yi)
+                + xi
+            );
+
+        if(intersect){
+            inside = !inside;
+        }
+
+    }
+
+    return inside;
+
+}
+
+
+/* ============================================================
+   HIT TEST
+   ============================================================ */
+
+function hitTest(p){
+
+    const tol =
+        Math.max(
+            8 / Math.max(scale,0.01),
+            3
+        );
+
+    for(
+        let i=boxes().length-1;
+        i>=0;
+        i--
+    ){
+
+        const b = boxes()[i];
+
+        for(
+            const [handle,x,y]
+            of boxHandles(b)
+        ){
+
+            if(
+                Math.hypot(
+                    p.x-x,
+                    p.y-y
+                ) <= tol
+            ){
+
+                return {
+                    index:i,
+                    handle:handle
+                };
+
+            }
+
+        }
+
+        if(
+            pointInPoly(
+                p,
+                ensurePoints(b).points
+            )
+        ){
+
+            return {
+                index:i,
+                handle:'move'
+            };
+
+        }
+
+    }
+
+    return null;
+
+}
+
+
+/* ============================================================
+   CURSOR
+   ============================================================ */
+
+function cursorFor(handle){
+
+    return {
+
+        p0:'nwse-resize',
+        p1:'nesw-resize',
+        p2:'nwse-resize',
+        p3:'nesw-resize',
+        move:'move'
+
+    }[handle] || 'crosshair';
+
+}
+
+
+/* ============================================================
+   GEOMETRIC 4-CORNER RESIZE
+   ============================================================ */
+
+function resizeFromHandle(
+    original,
+    handle,
+    delta
+){
+
+    const index =
+        ({
+            p0:0,
+            p1:1,
+            p2:2,
+            p3:3
+        })[handle];
+
+    if(index === undefined){
+        return cloneBox(original);
+    }
+
+    const pts =
+        original.points.map(p => [
+            p[0],
+            p[1]
+        ]);
+
+    const result =
+        geometricMovePoint(
+            pts,
+            index,
+            [
+                pts[index][0] + delta.x,
+                pts[index][1] + delta.y
+            ]
+        );
+
+    return {
+        text: original.text || '',
+        points: result
+    };
+
+}
+
+
+/* ============================================================
+   MOUSE DOWN/* ============================================================
+   MOUSE DOWN
+   ============================================================ */
+
+canvas.onmousedown = e => {
+
+    if(!files.length){
+        return;
+    }
+
+
+    const p =
+        pToImage(e);
+
+
+    const hit =
+        hitTest(p);
+
+
+    if(hit){
+
+        selected =
+            hit.index;
+
+
+        editAction =
+            hit.handle === 'move'
+            ? 'move'
+            : 'resize';
+
+
+        editHandle =
+            hit.handle;
+
+
+        editStart =
+            p;
+
+
+        editBox =
+            cloneBox(
+                boxes()[selected]
+            );
+
+
+        updateLabels();
+
+        draw();
+
+        return;
+
+    }
+
+
+    /*
+     * Create a new box.
+     *
+     * IMPORTANT:
+     * p is already in ORIGINAL IMAGE pixels.
+     */
+
+    drawing = true;
+
+    start = p;
+
+
+    boxes().push(
+        norm(p,p)
+    );
+
+
+    selected =
+        boxes().length - 1;
+
+
+    draw();
+
+};
+
+
+/* ============================================================
+   MOUSE MOVE
+   ============================================================ */
+
+canvas.onmousemove = e => {
+
+    if(!files.length){
+        return;
+    }
+
+
+    const p =
+        pToImage(e);
+
+
+    if(
+        editAction &&
+        selected >= 0
+    ){
+
+        const b =
+            boxes()[selected];
+
+
+        const dx =
+            p.x - editStart.x;
+
+        const dy =
+            p.y - editStart.y;
+
+
+        if(editAction === 'move'){
+
+            Object.assign(
+                b,
+                {
+
+                    text:
+                        editBox.text,
+
+                    points:
+                        editBox.points.map(
+                            pt =>
+                                clampPoint(
+                                    [
+                                        pt[0] + dx,
+                                        pt[1] + dy
+                                    ]
+                                )
+                        )
+
+                }
+            );
+
+        }
+        else{
+
+            Object.assign(
+                b,
+                resizeFromHandle(
+                    editBox,
+                    editHandle,
+                    {
+                        x:dx,
+                        y:dy
+                    }
+                )
+            );
+
+        }
+
+
+        draw();
+
+        return;
+
+    }
+
+
+    if(drawing){
+
+        const b =
+            boxes()[selected];
+
+
+        Object.assign(
+            b,
+            norm(
+                start,
+                p
+            )
+        );
+
+
+        draw();
+
+        return;
+
+    }
+
+
+    const hit =
+        hitTest(p);
+
+
+    canvas.style.cursor =
+        hit
+        ? cursorFor(hit.handle)
+        : 'crosshair';
+
+};
+
+
+/* ============================================================
+   MOUSE UP
+   ============================================================ */
+
+canvas.onmouseup = e => {
+
+    if(
+        drawing ||
+        editAction
+    ){
+
+        drawing = false;
+
+        editAction = null;
+
+        editStart = null;
+
+        editBox = null;
+
+        editHandle = '';
+
+
+        const b =
+            boxes()[selected];
+
+
+        const bounds =
+            b
+            ? boxBounds(b)
+            : {
+                w:0,
+                h:0
+            };
+
+
+        if(
+            bounds.w < 4 ||
+            bounds.h < 4
+        ){
+
+            boxes().splice(
+                selected,
+                1
+            );
+
+            selected = -1;
+
+        }
+
+
+        updateLabels();
+
+        draw();
+
+        scheduleAutosave();
+
+    }
+
+};
+
+
+/* ============================================================
+   WHEEL ZOOM
+   ============================================================ */
+
+wrap.addEventListener(
+    'wheel',
+    e => {
+
+        if(!img.naturalWidth){
+            return;
+        }
+
+        e.preventDefault();
+
+        zoomAt(e.deltaY);
+
+    },
+    {
+        passive:false
+    }
+);
+
+
+/* ============================================================
+   DRAW
+   ============================================================ */
+
+function draw(){
+
+    if(
+        !img.naturalWidth ||
+        !img.naturalHeight
+    ){
+
+        canvas.width = 600;
+        canvas.height = 400;
+
+        ctx.fillStyle = '#777';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'center';
+
+        ctx.fillText(
+            'Open an image folder to begin',
+            300,
+            200
+        );
+
+        return;
+    }
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    /*
+     * IMAGE COORDINATE SYSTEM
+     * -----------------------
+     * All annotation points are stored in ORIGINAL image pixels.
+     * Never use the browser/CSS size directly for annotation data.
+     *
+     * Use independent X/Y ratios so the box remains correct even
+     * if the canvas is resized or displayed with a different aspect.
+     */
+    const sx =
+        canvas.width / img.naturalWidth;
+
+    const sy =
+        canvas.height / img.naturalHeight;
+
+    ctx.drawImage(
+        img,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    if(verified.has(key())){
+
+        ctx.fillStyle =
+            'rgba(22,163,74,.9)';
+
+        ctx.beginPath();
+
+        ctx.arc(
+            canvas.width - 28,
+            28,
+            18,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+
+        ctx.fillText(
+            '✓',
+            canvas.width - 28,
+            37
+        );
+    }
+
+    boxes().forEach((b,i)=>{
+
+        materializeNormalizedBox(b);
+
+        const pts =
+            ensurePoints(b).points;
+
+        if(!pts || pts.length !== 4){
+            return;
+        }
+
+        /*
+         * Convert ORIGINAL IMAGE PIXELS -> CANVAS PIXELS.
+         */
+        const cp =
+            pts.map(p => [
+                p[0] * sx,
+                p[1] * sy
+            ]);
+
+        ctx.save();
+
+        ctx.lineWidth =
+            i === selected ? 3 : 2;
+
+        /*
+         * Loaded OCR boxes are green.
+         * Selected/editing box is blue.
+         */
+        ctx.strokeStyle =
+            i === selected
+            ? '#0066ff'
+            : '#00a83b';
+
+        ctx.setLineDash(
+            i === selected ? [] : [5,3]
+        );
+
+        /*
+         * Draw the EXACT quadrilateral.
+         */
+        ctx.beginPath();
+
+        ctx.moveTo(
+            cp[0][0],
+            cp[0][1]
+        );
+
+        for(let j=1; j<cp.length; j++){
+
+            ctx.lineTo(
+                cp[j][0],
+                cp[j][1]
+            );
+
+        }
+
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        /*
+         * Label number.
+         */
+        const labelX = cp[0][0];
+        const labelY = cp[0][1];
+
+        ctx.fillStyle =
+            i === selected
+            ? '#0066ff'
+            : '#00a83b';
+
+        ctx.fillRect(
+            labelX,
+            Math.max(0, labelY - 20),
+            24,
+            20
+        );
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+
+        ctx.fillText(
+            i + 1,
+            labelX + 12,
+            Math.max(14, labelY - 6)
+        );
+
+        /*
+         * OCR text.
+         */
+        if(b.text){
+
+            const bb = boxBounds(b);
+
+            ctx.fillStyle = '#111';
+            ctx.font = '13px Arial';
+            ctx.textAlign = 'left';
+
+            const tx = bb.x * sx;
+            const ty = Math.max(
+                15,
+                bb.y * sy - 5
+            );
+
+            /*
+             * Small white background makes the text readable
+             * without covering the OCR polygon.
+             */
+            const tw =
+                Math.min(
+                    canvas.width - tx,
+                    Math.max(
+                        20,
+                        ctx.measureText(b.text).width + 6
+                    )
+                );
+
+            ctx.fillStyle =
+                'rgba(255,255,255,.85)';
+
+            ctx.fillRect(
+                tx,
+                Math.max(0, ty - 14),
+                tw,
+                17
+            );
+
+            ctx.fillStyle = '#111';
+
+            ctx.fillText(
+                b.text,
+                tx + 3,
+                ty
+            );
+        }
+
+        /*
+         * Editing handles.
+         */
+        if(i === selected){
+
+            ctx.save();
+
+            /*
+             * EXACTLY FOUR geometric corner handles.
+             * Diamond shape makes the four editable points
+             * visually distinct from the OCR polygon.
+             */
+            boxHandles(b).forEach(
+                ([handle,x,y]) => {
+
+                    const px = x * sx;
+                    const py = y * sy;
+                    const size = 12;
+
+                    ctx.beginPath();
+
+                    ctx.moveTo(
+                        px,
+                        py - size/2
+                    );
+
+                    ctx.lineTo(
+                        px + size/2,
+                        py
+                    );
+
+                    ctx.lineTo(
+                        px,
+                        py + size/2
+                    );
+
+                    ctx.lineTo(
+                        px - size/2,
+                        py
+                    );
+
+                    ctx.closePath();
+
+                    ctx.fillStyle = '#20e844';
+                    ctx.fill();
+
+                    ctx.strokeStyle = '#0066ff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                }
+            );
+
+            ctx.restore();
+
+        }
+
+        ctx.restore();
+    });
+
+    document.getElementById(
+        'zoomText'
+    ).textContent =
+        Math.round(scale * 100) + '%';
+}
+
+
+/* ============================================================
+   LABEL LIST/* ============================================================
+   LABEL LIST
+   ============================================================ */
+
+function updateLabels(){
+
+    const el =
+        document.getElementById('labels');
+
+    el.innerHTML = '';
+
+
+    boxes().forEach((b,i)=>{
+
+        const r =
+            document.createElement('div');
+
+        r.className =
+            'row' +
+            (i === selected
+                ? ' active'
+                : '');
+
+
+        const n =
+            document.createElement('b');
+
+        n.textContent =
+            i+1;
+
+
+        const t =
+            document.createElement('span');
+
+        t.className = 'txt';
+
+        t.textContent =
+            b.text || '(empty)';
+
+
+        const del =
+            document.createElement('button');
+
+        del.textContent = '×';
+
+
+        del.onclick = e => {
+
+            e.stopPropagation();
+
+            selected = i;
+
+            deleteBox();
+
+        };
+
+
+        r.append(
+            n,
+            t,
+            del
+        );
+
+
+        r.onclick = () => {
+
+            selected = i;
+
+            document.getElementById(
+                'text'
+            ).value =
+                b.text || '';
+
+
+            updateLabels();
+
+            draw();
+
+        };
+
+
+        el.appendChild(r);
+
+    });
+
+
+    document.getElementById(
+        'boxCount'
+    ).textContent =
+        '(' + boxes().length + ')';
+
+
+    document.getElementById(
+        'text'
+    ).value =
+        selected >= 0
+        ? (boxes()[selected]?.text || '')
+        : '';
+
+}
+
+
+/* ============================================================
+   APPLY OCR TEXT
+   ============================================================ */
+
+function applyText(){
+
+    if(
+        selected >= 0 &&
+        boxes()[selected]
+    ){
+
+        const textInput = document.getElementById('text');
+        const selectionStart = textInput.selectionStart;
+        const selectionEnd = textInput.selectionEnd;
+        const keepSelection = document.activeElement === textInput;
+        const text = textInput.value.toUpperCase();
+
+        if(textInput.value !== text){
+            textInput.value = text;
+        }
+
+        boxes()[selected].text = text;
+
+        scheduleAutosave();
+
+        updateLabels();
+
+        if(keepSelection){
+            textInput.setSelectionRange(
+                text.slice(0,selectionStart).length,
+                text.slice(0,selectionEnd).length
+            );
+        }
+
+        draw();
+
+    }
+
+}
+
+
+/* ============================================================
+   ADD BOX
+   ============================================================ */
+
+function addBox(){
+
+    if(!img.naturalWidth){
+        return;
+    }
+
+
+    const x =
+        img.naturalWidth * .2;
+
+
+    const y =
+        img.naturalHeight * .2;
+
+
+    const w =
+        img.naturalWidth * .3;
+
+
+    const h =
+        Math.max(
+            30,
+            img.naturalHeight * .07
+        );
+
+
+    const b = {
+
+        points:[
+
+            [x,y],
+
+            [x+w,y],
+
+            [x+w,y+h],
+
+            [x,y+h]
+
+        ],
+
+        text:''
+
+    };
+
+
+    boxes().push(b);
+    scheduleAutosave();
+
+
+    selected =
+        boxes().length - 1;
+
+
+    updateLabels();
+
+    draw();
+
+}
+
+
+/* ============================================================
+   DELETE BOX
+   ============================================================ */
+
+function deleteBox(){
+
+    if(selected >= 0){
+
+        boxes().splice(
+            selected,
+            1
+        );
+
+        scheduleAutosave();
+
+        selected =
+            Math.min(
+                selected,
+                boxes().length - 1
+            );
+
+
+        updateLabels();
+
+        draw();
+
+    }
+
+}
+
+
+/* ============================================================
+   RESTORE ORIGINAL ANNOTATIONS
+   ------------------------------------------------------------
+   Restores ONLY the current image from the label.txt snapshot
+   captured when the label file was loaded.
+   This is intentionally per-image to prevent the 50-unverified
+   image / 500-1000 image mismatch problem.
+   ============================================================ */
+
+function restoreOriginal(){
+
+    if(!files.length){
+        return;
+    }
+
+    const k = key();
+
+    if(!originalData.has(k)){
+        alert(
+            'No original label data is available for this image.'
+        );
+        return;
+    }
+
+    if(!confirm('Restore original annotations for this image?')){
+        return;
+    }
+
+    const original =
+        originalData.get(k) || [];
+
+    data.set(
+        k,
+        original.map(cloneOriginalBox)
+    );
+
+    scheduleAutosave();
+
+    selected = -1;
+
+    updateLabels();
+    draw();
+}
+
+
+/* ============================================================
+   CLEAR BOXES
+   ============================================================
+
+function clearBoxes(){
+
+    if(
+        confirm(
+            'Delete all boxes from this image?'
+        )
+    ){
+
+        setBoxes([]);
+
+        selected = -1;
+
+        updateLabels();
+
+        draw();
+
+    }
+
+}
+
+
+/* ============================================================
+   PREVIOUS / NEXT
+   ============================================================ */
+
+function prev(){
+
+    if(current > 0){
+
+        current--;
+
+        selected = -1;
+
+        load();
+
+        updateActiveThumb();
+
+    }
+
+}
+
+
+function next(){
+
+    if(
+        current <
+        files.length - 1
+    ){
+
+        current++;
+
+        selected = -1;
+
+        load();
+
+        updateActiveThumb();
+
+    }
+
+}
+
+
+/* ============================================================
+   NUDGE BOX
+   ============================================================ */
+
+function nudgeBox(
+    dx,
+    dy,
+    resize=false,
+    step=10
+){
+
+    if(
+        selected < 0 ||
+        !boxes()[selected]
+    ){
+
+        return false;
+
+    }
+
+
+    const b =
+        boxes()[selected];
+
+
+    if(resize){
+
+        const bb =
+            boxBounds(b);
+
+
+        const sx =
+            (bb.w + dx*step) /
+            Math.max(1,bb.w);
+
+
+        const sy =
+            (bb.h + dy*step) /
+            Math.max(1,bb.h);
+
+
+        ensurePoints(b).points =
+            b.points.map(
+                p =>
+                    clampPoint(
+                        [
+                            bb.x +
+                            (p[0]-bb.x) *
+                            Math.max(.05,sx),
+
+                            bb.y +
+                            (p[1]-bb.y) *
+                            Math.max(.05,sy)
+                        ]
+                    )
+            );
+
+    }
+    else{
+
+        ensurePoints(b).points =
+            b.points.map(
+                p =>
+                    clampPoint(
+                        [
+                            p[0] + dx*step,
+                            p[1] + dy*step
+                        ]
+                    )
+            );
+
+    }
+
+
+    updateLabels();
+
+    draw();
+
+    scheduleAutosave();
+
+    return true;
+
+}
+
+
+/* ============================================================
+   EXPORT LABEL.TXT
+   ============================================================ */
+
+/*
+ * IMPORTANT:
+ *
+ * This function exports ORIGINAL IMAGE PIXEL
+ * coordinates.
+ *
+ * There is NO scale multiplication here.
+ *
+ * Example:
+ *
+ * Original image:
+ * 350 x 80
+ *
+ * Box:
+ * [[6,23],[341,26],[341,76],[6,72]]
+ *
+ * Export remains:
+ * [[6,23],[341,26],[341,76],[6,72]]
+ *
+ * It will NOT become:
+ * [[3,12],[150,33],...]
+ */
+
+function labelTextFor(imageFiles){
+
+    const lines =
+        imageFiles.map((f,i)=>{
+
+            const image =
+                f.webkitRelativePath ||
+                f.name;
+
+
+            const k =
+                fileKey(f,i);
+
+
+            const anns =
+                (data.get(k) || [])
+                .map(b => {
+
+                    const pts = ensurePoints(b).points;
+
+                    return {
+                        transcription: b.text || '',
+                        points: pts.map(p => [Math.round(p[0]), Math.round(p[1])])
+                    };
+
+                });
+
+
+            return (
+                image +
+                '\t' +
+                JSON.stringify(anns)
+            );
+
+        });
+
+
+    return lines.join('\n') + '\n';
+
+}
+
+
+/* ============================================================
+   DOWNLOAD BLOB
+   ============================================================ */
+
+function downloadBlob(
+    blob,
+    name
+){
+
+    const a =
+        document.createElement('a');
+
+
+    const url =
+        URL.createObjectURL(blob);
+
+
+    a.href = url;
+
+    a.download = name;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+
+    setTimeout(
+        () => URL.revokeObjectURL(url),
+        1000
+    );
+
+}
+
+
+/* ============================================================
+   DOWNLOAD LABEL.TXT
+   ============================================================ */
+
+function downloadLabelTxt(){
+
+    const label =
+        labelTextFor(files);
+
+
+    downloadBlob(
+
+        new Blob(
+            [label],
+            {
+                type:'text/plain'
+            }
+        ),
+
+        'label.txt'
+
+    );
+
+}
+
+
+/* ============================================================
+   ZIP FUNCTIONS
+   ============================================================ */
+
+const crcTable =
+    (() => {
+
+        let c,t=[];
+
+
+        for(
+            let n=0;
+            n<256;
+            n++
+        ){
+
+            c=n;
+
+
+            for(
+                let k=0;
+                k<8;
+                k++
+            ){
+
+                c =
+                    c & 1
+                    ? 0xedb88320 ^
+                      (c>>>1)
+                    : c>>>1;
+
+            }
+
+
+            t[n] =
+                c>>>0;
+
+        }
+
+
+        return t;
+
+    })();
+
+
+function crc32(bytes){
+
+    let c =
+        0xffffffff;
+
+
+    for(
+        let i=0;
+        i<bytes.length;
+        i++
+    ){
+
+        c =
+            crcTable[
+                (c^bytes[i]) & 0xff
+            ] ^
+            (c>>>8);
+
+    }
+
+
+    return (
+        c^0xffffffff
+    )>>>0;
+
+}
+
+
+function u16(v){
+
+    const b =
+        new Uint8Array(2);
+
+
+    new DataView(
+        b.buffer
+    ).setUint16(
+        0,
+        v,
+        true
+    );
+
+
+    return b;
+
+}
+
+
+function u32(v){
+
+    const b =
+        new Uint8Array(4);
+
+
+    new DataView(
+        b.buffer
+    ).setUint32(
+        0,
+        v,
+        true
+    );
+
+
+    return b;
+
+}
+
+
+function concatBytes(chunks){
+
+    const size =
+        chunks.reduce(
+            (sum,c) =>
+                sum+c.length,
+            0
+        );
+
+
+    const out =
+        new Uint8Array(size);
+
+
+    let offset = 0;
+
+
+    chunks.forEach(c => {
+
+        out.set(
+            c,
+            offset
+        );
+
+        offset += c.length;
+
+    });
+
+
+    return out;
+
+}
+
+
+async function bytesFor(value){
+
+    if(typeof value === 'string'){
+
+        return new TextEncoder()
+            .encode(value);
+
+    }
+
+
+    return new Uint8Array(
+        await value.arrayBuffer()
+    );
+
+}
+
+
+async function downloadZip(
+    entries,
+    name
+){
+
+    const local = [];
+
+    const central = [];
+
+    let offset = 0;
+
+
+    for(
+        const entry
+        of entries
+    ){
+
+        const filename =
+            new TextEncoder()
+            .encode(
+                entry.name
+                .replace(/\\/g,'/')
+            );
+
+
+        const bytes =
+            await bytesFor(
+                entry.data
+            );
+
+
+        const crc =
+            crc32(bytes);
+
+
+        const size =
+            bytes.length;
+
+
+        const localHeader =
+            concatBytes([
+
+                u32(0x04034b50),
+
+                u16(20),
+
+                u16(0),
+
+                u16(0),
+
+                u16(0),
+
+                u16(0),
+
+                u32(crc),
+
+                u32(size),
+
+                u32(size),
+
+                u16(filename.length),
+
+                u16(0),
+
+                filename
+
+            ]);
+
+
+        local.push(
+            localHeader,
+            bytes
+        );
+
+
+        central.push(
+
+            concatBytes([
+
+                u32(0x02014b50),
+
+                u16(20),
+
+                u16(20),
+
+                u16(0),
+
+                u16(0),
+
+                u16(0),
+
+                u16(0),
+
+                u32(crc),
+
+                u32(size),
+
+                u32(size),
+
+                u16(filename.length),
+
+                u16(0),
+
+                u16(0),
+
+                u16(0),
+
+                u16(0),
+
+                u32(0),
+
+                u32(offset),
+
+                filename
+
+            ])
+
+        );
+
+
+        offset +=
+            localHeader.length +
+            size;
+
+    }
+
+
+    const centralSize =
+        central.reduce(
+            (sum,c) =>
+                sum+c.length,
+            0
+        );
+
+
+    const end =
+        concatBytes([
+
+            u32(0x06054b50),
+
+            u16(0),
+
+            u16(0),
+
+            u16(entries.length),
+
+            u16(entries.length),
+
+            u32(centralSize),
+
+            u32(offset),
+
+            u16(0)
+
+        ]);
+
+
+    downloadBlob(
+
+        new Blob(
+            [
+                ...local,
+                ...central,
+                end
+            ],
+            {
+                type:'application/zip'
+            }
+        ),
+
+        name
+
+    );
+
+}
+
+
+/* ============================================================
+   EXPORT-SAFE OCR POINTS
+   ============================================================ */
+
+function exportPointsForImage(b,width,height){
+    const pts=ensurePoints(b).points;
+    if(!pts || pts.length!==4) return null;
+
+    return pts.map(p=>[
+        b.coordinateMode==='normalized' ? p[0]*width : p[0],
+        b.coordinateMode==='normalized' ? p[1]*height : p[1]
+    ]).map(p=>[
+        Math.max(0,Math.min(width,p[0])),
+        Math.max(0,Math.min(height,p[1]))
+    ]);
+}
+
+function mimeForImage(file){
+    const n=file.name.toLowerCase();
+    if(n.endsWith('.jpg')||n.endsWith('.jpeg')) return 'image/jpeg';
+    if(n.endsWith('.webp')) return 'image/webp';
+    return 'image/png';
+}
+
+async function imageBitmapFromFile(file){
+    if(typeof createImageBitmap==='function'){
+        try { return await createImageBitmap(file); }
+        catch(err){ console.warn('createImageBitmap failed',file.name,err); }
+    }
+    const image=new Image();
+    const url=URL.createObjectURL(file);
+    try{
+        await new Promise((resolve,reject)=>{
+            image.onload=resolve;
+            image.onerror=reject;
+            image.src=url;
+        });
+        return image;
+    }finally{ URL.revokeObjectURL(url); }
+}
+
+function drawExportPolygon(cctx,pts,index,width,height){
+    if(!pts || pts.length!==4) return;
+    cctx.save();
+    cctx.strokeStyle='#00b83f';
+    cctx.lineWidth=Math.max(2,Math.round(Math.min(width,height)/500));
+    cctx.lineJoin='round';
+    cctx.lineCap='round';
+    cctx.beginPath();
+    cctx.moveTo(pts[0][0],pts[0][1]);
+    for(let j=1;j<pts.length;j++) cctx.lineTo(pts[j][0],pts[j][1]);
+    cctx.closePath();
+    cctx.stroke();
+    cctx.restore();
+}
+
+
+/* ============================================================
+   DOWNLOAD IMAGE + LABEL ZIP
+   ============================================================ */
+
+async function downloadImageLabelZip(imageFiles,name,includeAnnotated=false){
+
+    const entries=[];
+
+    imageFiles.forEach(f=>entries.push({
+        name:f.webkitRelativePath || f.name,
+        data:f
+    }));
+
+    entries.push({name:'label.txt',data:labelTextFor(imageFiles)});
+
+    if(includeAnnotated){
+
+        for(let i=0;i<imageFiles.length;i++){
+
+            const f=imageFiles[i];
+            const k=fileKey(f,i);
+            const anns=data.get(k)||[];
+            if(!anns.length) continue;
+
+            let bitmap=null;
+
+            try{
+                bitmap=await imageBitmapFromFile(f);
+
+                const width=bitmap.width || bitmap.naturalWidth;
+                const height=bitmap.height || bitmap.naturalHeight;
+                if(!width || !height) throw new Error('Invalid source dimensions');
+
+                const c=document.createElement('canvas');
+                c.width=width;
+                c.height=height;
+                const cctx=c.getContext('2d');
+                cctx.drawImage(bitmap,0,0,width,height);
+
+                anns.forEach((b,index)=>{
+                    const pts=exportPointsForImage(b,width,height);
+                    drawExportPolygon(cctx,pts,index,width,height);
+                });
+
+                const blob=await new Promise((resolve,reject)=>{
+                    c.toBlob(x=>x?resolve(x):reject(new Error('Canvas export failed')),
+                             mimeForImage(f),0.95);
+                });
+
+                entries.push({
+                    name:'annotated_verified/'+(f.webkitRelativePath || f.name).replace(/\\/g,'/'),
+                    data:blob
+                });
+
+            }catch(err){
+                console.error('[EXPORT] failed:',f.name,err);
+            }finally{
+                if(bitmap && typeof bitmap.close==='function') bitmap.close();
+            }
+        }
+    }
+
+    await downloadZip(entries,name);
+}
+
+
+/* ============================================================
+   DOWNLOAD VERIFIED
+   ============================================================ */
+
+async function downloadVerifiedZip(){
+
+    const verifiedFiles =
+        files.filter(
+            (f,i) =>
+                verified.has(
+                    fileKey(f,i)
+                )
+        );
+
+    if(!verifiedFiles.length){
+
+        alert(
+            'No verified images found.'
+        );
+
+        return;
+    }
+
+    /*
+     * VERIFIED ZIP contains:
+     *
+     * 1. Original verified images
+     * 2. label.txt with ORIGINAL coordinates
+     * 3. annotated_verified/ with correctly rendered
+     *    green OCR polygons
+     */
+    await downloadImageLabelZip(
+        verifiedFiles,
+        'verified.zip',
+        true
+    );
+
+}
+
+
+/* ============================================================
+   DOWNLOAD ALL
+   ============================================================ */
+
+async function downloadAllZip(){
+
+    await downloadImageLabelZip(
+        files,
+        'all_image_verified.zip',
+        false
+    );
+
+}
+
+/* ============================================================
+   TEXTAREA
+   ============================================================ */
+
+document
+.getElementById('text')
+.addEventListener(
+    'input',
+    applyText
+);
+
+window.addEventListener('beforeunload',flushAutosave);
+
+
+/* ============================================================
+   WINDOW RESIZE
+   ============================================================ */
+
+window.onresize = () => {
+
+    if(fitMode){
+
+        fit();
+
+    }
+
+};
+
+
+/* ============================================================
+   KEYBOARD SHORTCUTS
+   ============================================================ */
+
+document.onkeydown = e => {
+
+    if(
+        e.target.tagName ===
+        'TEXTAREA'
+    ){
+
+        return;
+
+    }
+
+
+    const key =
+        e.key.toLowerCase();
+
+
+    if(e.key === 'ArrowLeft'){
+
+        e.preventDefault();
+
+
+        if(
+            !nudgeBox(
+                -1,
+                0,
+                e.shiftKey
+            )
+        ){
+
+            prev();
+
+        }
+
+        return;
+
+    }
+
+
+    if(e.key === 'ArrowRight'){
+
+        e.preventDefault();
+
+
+        if(
+            !nudgeBox(
+                1,
+                0,
+                e.shiftKey
+            )
+        ){
+
+            next();
+
+        }
+
+        return;
+
+    }
+
+
+    if(
+        e.key === 'ArrowUp' &&
+        nudgeBox(
+            0,
+            -1,
+            e.shiftKey
+        )
+    ){
+
+        e.preventDefault();
+
+        return;
+
+    }
+
+
+    if(
+        e.key === 'ArrowDown' &&
+        nudgeBox(
+            0,
+            1,
+            e.shiftKey
+        )
+    ){
+
+        e.preventDefault();
+
+        return;
+
+    }
+
+
+    if(
+        key === 'a' ||
+        e.key === 'PageUp'
+    ){
+
+        e.preventDefault();
+
+        prev();
+
+    }
+
+
+    if(
+        key === 'd' ||
+        e.key === 'PageDown'
+    ){
+
+        e.preventDefault();
+
+        next();
+
+    }
+
+
+    if(key === 's'){
+
+        e.preventDefault();
+
+        addBox();
+
+    }
+
+
+    if(key === 'r'){
+
+        e.preventDefault();
+
+        restoreOriginal();
+
+        return;
+
+    }
+
+
+    if(key === 'c'){
+
+        e.preventDefault();
+
+        nudgeBox(
+            -1,
+            0,
+            false,
+            35
+        );
+
+    }
+
+
+    if(key === 'x'){
+
+        e.preventDefault();
+
+        nudgeBox(
+            1,
+            0,
+            false,
+            35
+        );
+
+    }
+
+
+    if(e.key === ' '){
+
+        e.preventDefault();
+
+        toggleVerified();
+
+    }
+
+
+    if(e.key === 'Delete'){
+
+        e.preventDefault();
+
+        deleteBox();
+
+    }
+
+
+    if(e.key === '+'){
+
+        e.preventDefault();
+
+        zoomIn();
+
+    }
+
+
+    if(e.key === '-'){
+
+        e.preventDefault();
+
+        zoomOut();
+
+    }
+
+};
+
+
+/* ============================================================
+   SERVER INFORMATION
+   ============================================================ */
+
+document.getElementById(
+    'server'
+).textContent =
+    'Desktop Application';
+
+
+/* ============================================================
+   INITIAL DRAW
+   ============================================================ */
+
+draw();
+
+</script>
+
+</body>
+</html>
