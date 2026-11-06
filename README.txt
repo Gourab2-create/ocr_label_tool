@@ -1,12 +1,12 @@
-PaddleOCR Label Desktop
+OCR Label Desktop
 =======================
 
 This version opens in its own desktop window. It does not start the Python
 HTTP server and does not require you to open Firefox/Chrome manually.
 
 Files:
-- paddleocr_label_desktop.py : desktop launcher
-- paddleocr_label.html       : annotation interface
+- ocr_label_desktop.py : desktop launcher
+- ocr_label.html       : annotation interface
 - logo.jpg                   : header logo   # logo add 
 - requirements.txt           : Python dependencies
 - run.sh                      : Linux launcher
@@ -17,7 +17,7 @@ Ubuntu installation:
     python3 -m pip install -r requirements.txt
 
 Run:
-    python3 paddleocr_label_desktop.py
+    python3 ocr_label_desktop.py
 
 Or:
     chmod +x run.sh
