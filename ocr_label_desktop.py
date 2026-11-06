@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PaddleOCR Label Desktop
+OCR Label Desktop
 Runs the existing annotation interface inside a standalone desktop window.
 No Flask, HTTP server, or external browser is started.
 """
